@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ek surprise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --plum: #2a1a2e;
+    --plum-soft: #3d2742;
+    --blush: #f7d9d4;
+    --rose: #e87a90;
+    --marigold: #f4b942;
+    --ivory: #fff6ee;
+    --display: "Fraunces", Georgia, serif;
+    --body: "Nunito", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--plum);
+    color: var(--ivory);
+    font-family: var(--body);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- Lock screen ---------- */
+  #lock h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.2rem, 8vw, 3.6rem);
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  #lock p { color: var(--blush); margin-bottom: 28px; opacity: .85; }
+  .lock-row { display: flex; gap: 10px; width: min(380px, 100%); }
+  #pw {
+    flex: 1; min-width: 0;
+    background: var(--plum-soft);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    padding: 14px 20px;
+    font: 500 1.05rem var(--body);
+    color: var(--ivory);
+    outline: none;
+  }
+  #pw::placeholder { color: #b9a3b8; }
+  #pw:focus-visible { border-color: var(--marigold); }
+  .btn-go {
+    background: var(--marigold);
+    color: var(--plum);
+    border: 0; border-radius: 999px;
+    padding: 0 24px;
+    font: 700 1.05rem var(--body);
+    cursor: pointer;
+  }
+  .btn-go:focus-visible { outline: 3px solid var(--ivory); outline-offset: 2px; }
+  #err { min-height: 1.4em; margin-top: 16px; color: var(--rose); font-weight: 700; }
+  .shake { animation: shake .4s; }
+  @keyframes shake {
+    20% { transform: translateX(-10px); } 40% { transform: translateX(9px); }
+    60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
+  }
+
+  /* ---------- Options ---------- */
+  #menu h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    margin-bottom: 30px;
+  }
+  #opts {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    justify-content: center;
+    max-width: 440px;
+  }
+  .opt {
+    width: 92px; height: 92px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--blush);
+    color: var(--plum);
+    font: 700 2rem var(--display);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform .15s ease;
+  }
+  .opt.live { background: var(--marigold); }
+  .opt.live:hover { transform: scale(1.08); }
+  .opt:focus-visible { outline: 3px solid var(--ivory); outline-offset: 3px; }
+  .opt.runner { transition: left .25s cubic-bezier(.3,1.4,.5,1), top .25s cubic-bezier(.3,1.4,.5,1); }
+
+  /* ---------- Video ---------- */
+  #player {
+    position: fixed; inset: 0;
+    background: rgba(20, 10, 24, .96);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+  #player video {
+    max-width: 100%;
+    max-height: calc(100vh - 110px);
+    max-height: calc(100dvh - 110px);
+    border-radius: 18px;
+    background: #000;
+  }
+  #close {
+    position: absolute;
+    top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px;
+    background: var(--blush); color: var(--plum);
+    border: 0; border-radius: 999px;
+    padding: 10px 20px;
+    font: 700 1rem var(--body);
+    cursor: pointer;
+  }
+  #close:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shake { animation: none; }
+    .opt, .opt.runner { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 1. Password -->
+<main id="lock" class="screen">
+  <h1>PASSWORD</h1>
+  <p>ENTER CORRECT PASSWORD</p>
+  <div class="lock-row" id="lockRow">
+    <input id="pw" type="password" placeholder="Password" autocomplete="off" aria-label="Password">
+    <button class="btn-go" id="go">OPEN IT</button>
+  </div>
+  <div id="err" role="alert"></div>
+</main>
+
+<!-- 2. Options -->
+<main id="menu" class="screen hidden">
+  <h2>Ek option chuno</h2>
+  <div id="opts">
+    <button class="opt runner" data-n="1" aria-label="Option 1">1</button>
+    <button class="opt live"   data-n="2" aria-label="Option 2">2</button>
+    <button class="opt live"   data-n="3" aria-label="Option 3">3</button>
+    <button class="opt runner" data-n="4" aria-label="Option 4">4</button>
+    <button class="opt runner" data-n="5" aria-label="Option 5">5</button>
+  </div>
+</main>
+
+<!-- 3. Video player -->
+<div id="player" class="hidden">
+  <button id="close">CLOSE IT </button>
+  <video id="vid" controls playsinline></video>
+</div>
+
+<script>
+  // ====== Yahan password aur videos badal sakte ho ======
+  const PASSWORD = "paridhi";
+  const VIDEOS = { 2: "video2.mp4", 3: "video3.mp4" };
+  // =====================================================
+
+  const $ = (id) => document.getElementById(id);
+  const pw = $("pw"), err = $("err");
+
+  function unlock() {
+    if (pw.value.trim().toLowerCase() === PASSWORD.toLowerCase()) {
+      $("lock").classList.add("hidden");
+      $("menu").classList.remove("hidden");
+    } else {
+      err.textContent = "GALAT HAI REEE, dobara try karo.";
+      const row = $("lockRow");
+      row.classList.remove("shake"); void row.offsetWidth; row.classList.add("shake");
+      pw.select();
+    }
+  }
+  $("go").addEventListener("click", unlock);
+  pw.addEventListener("keydown", (e) => { if (e.key === "Enter") unlock(); });
+  pw.focus();
+
+  /* ---- Live options (2 and 3): play video ---- */
+  const player = $("player"), vid = $("vid");
+  document.querySelectorAll(".opt.live").forEach((b) => {
+    b.addEventListener("click", () => {
+      vid.src = VIDEOS[b.dataset.n];
+      player.classList.remove("hidden");
+      vid.play().catch(() => {});
+    });
+  });
+  function closePlayer() {
+    vid.pause(); vid.removeAttribute("src"); vid.load();
+    player.classList.add("hidden");
+  }
+  $("close").addEventListener("click", closePlayer);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !player.classList.contains("hidden")) closePlayer();
+  });
+
+  /* ---- Runaway options (1, 4, 5): dodge, never clickable ---- */
+  const runners = document.querySelectorAll(".opt.runner");
+
+  function dodge(btn, px, py) {
+    const size = btn.offsetWidth;
+    const pad = 12;
+    const maxX = window.innerWidth - size - pad;
+    const maxY = window.innerHeight - size - pad;
+
+    // First dodge: lift the button out of the layout at its current spot
+    if (btn.style.position !== "fixed") {
+      const r = btn.getBoundingClientRect();
+      const ph = document.createElement("div");   // keeps the row from collapsing
+      ph.style.cssText = `width:${size}px;height:${size}px`;
+      btn.parentNode.insertBefore(ph, btn);
+      btn.style.position = "fixed";
+      btn.style.left = r.left + "px";
+      btn.style.top = r.top + "px";
+      btn.style.zIndex = 5;
+    }
+
+    // Pick a new spot that is far from the pointer
+    let x, y, tries = 0;
+    do {
+      x = pad + Math.random() * Math.max(maxX - pad, 0);
+      y = pad + Math.random() * Math.max(maxY - pad, 0);
+      tries++;
+    } while (tries < 25 && Math.hypot(x + size / 2 - px, y + size / 2 - py) < 180);
+
+    btn.style.left = x + "px";
+    btn.style.top = y + "px";
+  }
+
+  runners.forEach((b) => {
+    const run = (e) => {
+      const t = e.touches ? e.touches[0] : e;
+      e.preventDefault();
+      dodge(b, t.clientX, t.clientY);
+    };
+    b.addEventListener("pointerenter", run);
+    b.addEventListener("pointerdown", run);
+    b.addEventListener("touchstart", run, { passive: false });
+    b.addEventListener("mousedown", (e) => e.preventDefault());
+    // Safety net: even if a click sneaks through, do nothing
+    b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
+    // Keyboard users: Enter/Space makes it hop away too
+    b.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        dodge(b, window.innerWidth / 2, window.innerHeight / 2);
+      }
+    });
+  });
+</script>
+</body>
+</html>
